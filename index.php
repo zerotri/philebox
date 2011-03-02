@@ -105,34 +105,75 @@ $(document).ready(function(){
 <div class="block">
 	<div id="browse">
 		<?php
-			function showContent($path){
-
-				if ($handle = opendir($path))
-				{
-					$up = substr($path, 0, (strrpos(dirname($path."/."),"/")));
-					while (false !== ($file = readdir($handle)))
+			function prettySize($size){
+				$units = array(' B', ' KB', ' MB', ' GB', ' TB');
+			    for ($i = 0; $size >= 1024 && $i < 4; $i++) $size /= 1024;
+			    return round($size, 2).$units[$i];
+			}
+				function tangoIcon($ext, $size = "32"){
+					$images = array("jpg", "png", "jpeg", "gif", "tiff");
+					$video  = array("mkv", "mp4", "m4v", "mov");
+					$text   = array("txt", "mdown", "md", "markdown");
+					$web    = array("html", "php", "css", "js");
+					if (in_array(strtolower($ext), $images))
 					{
-						if ($file != "." && $file != "..")
+						$out = "http://shelbymunsch.com/img/tango-icons/".$size."x".$size."/mimetypes/image-x-generic.png";
+					}
+					elseif (in_array(strtolower($ext), $video))
+					{
+						$out = "http://shelbymunsch.com/img/tango-icons/".$size."x".$size."/mimetypes/video-x-generic.png";
+					}
+					elseif (in_array(strtolower($ext), $text))
+					{
+						$out = "http://shelbymunsch.com/img/tango-icons/".$size."x".$size."/mimetypes/text-x-generic.png";
+					}
+					elseif (in_array(strtolower($ext), $web))
+					{
+						$out = "http://shelbymunsch.com/img/tango-icons/".$size."x".$size."/mimetypes/text-html.png";
+					}
+					else
+					{
+						$out = "http://shelbymunsch.com/img/tango-icons/".$size."x".$size."/mimetypes/generic-icon.png";
+					}
+					return $out;
+				}
+				function showContent($path){
+					if ($handle = opendir($path))
+					{
+						$up = substr($path, 0, (strrpos(dirname($path."/."),"/")));
+						$count = 0;
+						$files = "";
+						$images= "";
+						while (false !== ($file = readdir($handle)))
 						{
-							$fName  = $file;
-							$file   = $path.'/'.$file;
-							$ext = substr($fName, strrpos($fName, '.') + 1);
-							$images = array("jpg", "png", "jpeg", "gif");
-							if (!is_dir($file)) {
-								if (in_array(strtolower($ext), $images)) {
-									// Image handler!
-									echo "<div id='img'><a href='".$file."' class='img'><img src='".$file."'><p class='caption'>".$fName."</p></a></div>";
-								} else {
-									if(is_file($file) && $fName != ".DS_Store") {
-										echo "<div class='file'><a href='".$file."'>".$fName."</a></div>";
+							if ($file != "." && $file != "..")
+							{
+								$fName  = $file;
+								$file   = $path.'/'.$file;
+								$fSize  = prettySize(filesize($file));
+								$ext = substr($fName, strrpos($fName, '.') + 1);
+								$fImage = tangoIcon($ext);
+								$imagexts = array("jpg", "png", "jpeg", "gif");
+								
+								if (!is_dir($file)) {
+									if (in_array(strtolower($ext), $imagexts)) {
+										// Image handler!
+										$images .= "<div id='img'><a href='".$file."' class='img'><img src='".$file."'><p class='caption'>".$fName."</p></a></div>";
+										$count++;
+										if ( $count == 4 ) { $images .= "<br style=\"clear:both;\">"; $count = 0; }
+									} else {
+										if(is_file($file) && $fName != ".DS_Store" && $ext != "php" && "." . $ext != $fName) {
+											$files .= "<div class='file' style=\"background:url('".$fImage."') bottom left no-repeat; line-height: 32px; padding-left: 36px; clear: both;\"><a href='".$file."'>".$fName."</a>: ".$fSize."</div>\n";
+										}
 									}
 								}
 							}
 						}
-					}
-					closedir($handle);
-				}    
-			}
+						closedir($handle);
+						echo $files;
+						echo $images;
+					}    
+				}
 			showContent("uploads");
 		?>
 		<br style="clear:both;">
